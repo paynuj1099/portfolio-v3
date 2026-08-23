@@ -16,7 +16,8 @@ export function CustomCursor() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) return;
+    const supportsCustomCursor = window.matchMedia("(hover: hover) and (pointer: fine)");
+    if (reducedMotion.matches || !supportsCustomCursor.matches) return;
 
     const cursor = cursorRef.current;
     if (!cursor) return;
@@ -46,17 +47,12 @@ export function CustomCursor() {
       mode = getCursorMode(event.target);
       if (cursor.dataset.mode !== "active") cursor.dataset.mode = mode;
     };
-    const handleMouseMove = (event: MouseEvent) => {
-      document.documentElement.dataset.customCursor = "true";
-      pointerX = event.clientX;
-      pointerY = event.clientY;
-      cursor.dataset.visible = "true";
-      modalActive = event.target instanceof Element && Boolean(event.target.closest(".certificate-modal"));
-      mode = getCursorMode(event.target);
-      if (cursor.dataset.mode !== "active") cursor.dataset.mode = mode;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      cursor.dataset.mode = "active";
     };
-    const handlePointerDown = () => { cursor.dataset.mode = "active"; };
     const handlePointerUp = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
       mode = getCursorMode(event.target);
       cursor.dataset.mode = mode;
     };
@@ -64,7 +60,6 @@ export function CustomCursor() {
 
     animationFrame = window.requestAnimationFrame(render);
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("pointerdown", handlePointerDown, { passive: true });
     window.addEventListener("pointerup", handlePointerUp, { passive: true });
     document.documentElement.addEventListener("mouseleave", handlePointerLeave);
@@ -73,7 +68,6 @@ export function CustomCursor() {
       delete document.documentElement.dataset.customCursor;
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointerup", handlePointerUp);
       document.documentElement.removeEventListener("mouseleave", handlePointerLeave);
